@@ -13,7 +13,7 @@
 }
 
 .form-control:hover {
-    background-color: rgb(235, 229, 229) !important;
+    background: rgb(235, 229, 229) !important;
 }
 
 .form-select:hover {
