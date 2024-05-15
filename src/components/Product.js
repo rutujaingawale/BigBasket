@@ -1,27 +1,28 @@
 import axios from 'axios';
 import { Button } from 'bootstrap';
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { faBagShopping } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { login } from '../store/slice/UserSclice.js';
 import { useDispatch, useSelector } from 'react-redux';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { MyContext } from '../MycontextProviders.js';
+
 
 function Product() {
-    const dispatch = useDispatch();
-    const isLoggedIn = useSelector(state => state.user.isLoggedIn);
+   
 
-    const handleAddToCart = () => {
-        if (isLoggedIn) {
-            toast.success('Item added to cart!', { position: 'top-right' });
-        } else {
-            toast.error('Please log in to add items to the cart.', { position: 'top-right' });
-        }
-    };
-
+    // const handleAddToCart = () => {
+    //     if (isLoggedIn) {
+    //         toast.success('Item added to cart!', { position: 'top-right' });
+    //     } else {
+    //         toast.error('Please log in to add items to the cart.', { position: 'top-right' });
+    //     }
+    // };
+    const [cartProductListByCustomer, setCartProductListByCustomer] = useState([]);
     const [productlist, setProductList] = useState([]);
-
+    const { loggedUserData } = useContext(MyContext);
     const getProductList = async () => {
         const result = await axios.get("https://freeapi.gerasim.in/api/BigBasket/GetAllProducts");
         setProductList(result.data.data);
@@ -37,10 +38,11 @@ function Product() {
 
     const [loading, setLoading] = useState(false); // Moved useState here
 
-    const addToCart = (productId, custId) => {
+    const addToCart = (productId) => {
+        debugger
         const updatedCartItemsobj = {
             CartId: 0,
-            CustId: custId,
+            CustId: loggedUserData.custId,
             ProductId: productId,
             Quantity: 1,
             AddedDate: new Date().toISOString()
@@ -62,9 +64,26 @@ function Product() {
                 alert('Error adding item to cart: ' + error.message);
             });
     };
+    const getCartProductListbyCustId = async (custId) => {
+        debugger
+        try {
+            const result = await axios.get(`https://freeapi.miniprojectideas.com/api/BigBasket/GetCartProductsByCustomerId?id=${custId}`);
+            if (result.data.data != undefined) {
+                setCartProductListByCustomer(result.data.data);
+            } else {
+                console.error('Invalid data format:', result.data.result);
+                // Handle the error accordingly
+            }
+        } catch (error) {
+            console.error('Error fetching cart products:', error);
+            // Handle the error accordingly
+        }
+    };
 
     useEffect(() => {
         getProductList();
+        const CustId = loggedUserData.custId;
+        getCartProductListbyCustId(CustId);
     }, []);
 
     return (
@@ -84,7 +103,7 @@ function Product() {
                                 <div className="card-body" style={{ height: '150px' }}>
                                     <h5 className="card-title">{product.productName}</h5>
                                     <p className="card-text">Price: {product.productPrice}</p>
-                                    <button className='bg-success form-control text-white' onClick={() => addToCart(product.productId, 1)}><FontAwesomeIcon icon={faBagShopping} /> Add to cart</button>
+                                    <button className='bg-success form-control text-white' onClick={() => addToCart(product.productId)}><FontAwesomeIcon icon={faBagShopping} /> Add to cart</button>
                                 </div>
                             </div>
                         </div>

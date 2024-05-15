@@ -14,7 +14,7 @@ function App() {
     <div className="App">
       <MycontextProviders>
       <BrowserRouter>
-      <Navbar/>
+      <Navbar />
       <Routes>
       <Route path="/" element={<Product/>}></Route>
       <Route path="/product" element={<Product/>}></Route>

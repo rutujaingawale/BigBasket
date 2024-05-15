@@ -1,19 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCartShopping, faUser, faShoppingCart, faTimes } from '@fortawesome/free-solid-svg-icons';
 import Login from './Login';
 import Register from './Register';
+import { MyContext } from '../MycontextProviders';
 
 const Navbar = () => {
     const [categoryList, setCategoryList] = useState([]);
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [showRegisterModal, setShowRegisterModal] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [showCartDropdown, setShowCartDropdown] = useState(false);
     const [cartProductListByCustomer, setCartProductListByCustomer] = useState([]);
-    const [navbarVisible, setNavbarVisible] = useState(true);
+    const [error, setError] = useState('');
+    const { loggedUserData } = useContext(MyContext);
     const navigate = useNavigate();
 
     const getCategoryList = async () => {
@@ -29,16 +30,12 @@ const Navbar = () => {
 
     const handleLogout = () => {
         // Your logout logic here
-        setIsLoggedIn(false);
+        // setIsLoggedIn(false);
     };
 
-    const naviagteToCheckOut=()=>{
+    const naviagteToCheckOut = () => {
         navigate("/checkOut");
-        setNavbarVisible(false);
-      }
-    useEffect(() => {
-        getCategoryList();
-    }, []);
+    }
 
     const showLoginModalHandler = () => {
         setShowLoginModal(true);
@@ -59,6 +56,44 @@ const Navbar = () => {
     const toggleCartDropdown = () => {
         setShowCartDropdown(!showCartDropdown);
     }
+
+    const deleteCart = async (product) => {
+        try {
+          const response = await axios.get("https://freeapi.gerasim.in/api/BigBasket/DeleteProductFromCartById?id=" + product.cartId);
+          if (response.data.result) {
+            alert("Cart deleted");
+            getCartProductListbyCustId(); // Fetch cart products again after deletion
+          } else {
+            // Handle error if needed
+          }
+        } catch (error) {
+          // Handle error if needed
+          console.error('Error deleting cart:', error);
+        }
+    };
+
+    const getCartProductListbyCustId = async (custId) => {
+        debugger
+        try {
+            const result = await axios.get(`https://freeapi.miniprojectideas.com/api/BigBasket/GetCartProductsByCustomerId?id=${custId}`);
+            if (result.data.data != undefined) {
+                setCartProductListByCustomer(result.data.data);
+            } else {
+                console.error('Invalid data format:', result.data.result);
+                // Handle the error accordingly
+            }
+        } catch (error) {
+            console.error('Error fetching cart products:', error);
+            // Handle the error accordingly
+        }
+    };
+        
+    useEffect(() => {
+        getCategoryList();
+        if (loggedUserData && loggedUserData.custId) {
+            getCartProductListbyCustId(loggedUserData.custId);
+        }
+    }, [loggedUserData]);
 
     return (
         <>
@@ -88,21 +123,21 @@ const Navbar = () => {
                             </div>
                             <div className="nav-item dropdown">
                                 <a className="nav-link" href="#" onClick={toggleCartDropdown}>
-                                    <FontAwesomeIcon icon={faShoppingCart} style={{ color: 'black' }} />
+                                    <FontAwesomeIcon icon={faShoppingCart} style={{ color: 'black' }} />{cartProductListByCustomer.length}
                                     <i className="fa fa-cart-shopping fs-5 me-1" style={{ color: '#202122' }}></i>
                                 </a>
                                 <ul className={`dropdown-menu menuOnLeft rounded-0 mt-2 ${showCartDropdown ? 'show' : ''}`} aria-labelledby="navbarDropdown">
                                     {cartProductListByCustomer.map((cartItem, index) => (
                                         <li key={index} className="p-2">
                                             <div className="d-flex border-bottom justify-content-between align-items-center">
-                                                <img className="image-fluid" src={cartItem.productImageUrl} alt="" />
+                                                <img className="image-fluid" src={cartItem.productImageUrl} alt="" style={{ width: '50px', height: '50px' }}/>
                                                 <div>
                                                     <a href="#" className="text-decoration-none text-black fw-semibold">
                                                         <p className="m-0 p-0">{cartItem.productShortName}</p>
                                                     </a>
                                                     <p>{cartItem.quantity} * <i className="fa-solid fa-xmark" style={{ color: '#0d0d0d' }} ></i> ${cartItem.productPrice}</p>
                                                 </div>
-                                                <button type="button" className="btn fs-5 closeBtn">
+                                                <button type="button" className="btn fs-5 closeBtn" onClick={() => deleteCart(cartItem)}>
                                                     <FontAwesomeIcon icon={faTimes} />
                                                 </button>
                                             </div>
@@ -121,14 +156,15 @@ const Navbar = () => {
                                 </ul>
                             </div>
                             <Link className="nav-link" to="/"><FontAwesomeIcon icon={faUser} /></Link>
-                            <div className="nav-item dropdown">
-                                <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-
-                                </a>
+                           <div className="nav-item dropdown">
+                           <a className="nav-link dropdown-toggle text-dark content-hover" href="#" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                           {loggedUserData.name}
                                 <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                                     <li>
                                         <Link className="dropdown-item" onClick={showLoginModalHandler}>Login</Link>
                                     </li>
+                                   
                                     <li>
                                         <Link className="dropdown-item" onClick={showRegisterModalHandler}>Register</Link>
                                     </li>
@@ -136,7 +172,10 @@ const Navbar = () => {
                                         <Link className="dropdown-item" onClick={handleLogout}>Logout</Link>
                                     </li>
                                 </ul>
+                               
+                        </a>
                             </div>
+                            
                         </div>
                     </div>
                 </div>
