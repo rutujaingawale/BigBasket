@@ -10,11 +10,17 @@ import axios from 'axios';
 const CheckOut = () => {
     const { loggedUserData } = useContext(MyContext);
     const [totalQuantity, setTotalQuantity] = useState(0);
-    const [cartProductListByCustomer, setCartProductListByCustomer] = useState([]);
-    const [placeOrderObj, setPlaceOrderObj] = useState({
-        "saleId": 0,
+    // const [cartProductListByCustomer, setCartProductListByCustomer] = useState([]);
+    const{cartProductListByCustomer}=useContext(MyContext);
+    const{getCartProductListbyCustId}=useContext(MyContext);
+    const totalPrice = cartProductListByCustomer.reduce((total, cartItems) => {
+        return total + (cartItems.productPrice * cartItems.quantity);
+    }, 0);
+    const [placeObj, setPlaceobj] = useState({
+
+        //"saleId": 0,
         "custId": 0,
-        "saleDate": "",
+        "saleDate": new Date(),
         "totalInvoiceAmount": 0,
         "discount": 0,
         "paymentNaration": "",
@@ -23,23 +29,27 @@ const CheckOut = () => {
         "deliveryCity": "",
         "deliveryPinCode": "",
         "deliveryLandMark": "",
-        "isCanceled": true
-    });
+        "isCanceled": false,
+
+    })
+    const getplaceObj = (event, key) => {
+        setPlaceobj(prev => ({ ...prev, [key]: event.target.value }))
+    }
     const customerId = loggedUserData.custId;
     const navigate = useNavigate();
 
-    const getCartProductListbyCustId = async (customerId) => {
-        try {
-            const result = await axios.get(`https://freeapi.miniprojectideas.com/api/BigBasket/GetCartProductsByCustomerId?id=${customerId}`);
-            if (result !== undefined) {
-                setCartProductListByCustomer(result);
-            } else {
-                toast.error('Error in fetching cart Products');
-            }
-        } catch (error) {
-            alert(error);
-        }
-    }
+    // const getCartProductListbyCustId = async (customerId) => {
+    //     try {
+    //         const result = await axios.get(https://freeapi.miniprojectideas.com/api/BigBasket/GetCartProductsByCustomerId?id=${customerId});
+    //         if (result !== undefined) {
+    //             setCartProductListByCustomer(result);
+    //         } else {
+    //             toast.error('Error in fetching cart Products');
+    //         }
+    //     } catch (error) {
+    //         alert(error);
+    //     }
+    // }
 
     useEffect(() => {
         let total = 0;
@@ -50,11 +60,11 @@ const CheckOut = () => {
     }, [cartProductListByCustomer]);
 
     useEffect(() => {
-        getCartProductListbyCustId(customerId);
+        getCartProductListbyCustId(loggedUserData.custId);
     }, []);
 
     const resetObj = () => (
-        setPlaceOrderObj({
+        setPlaceobj({
             "saleId": 0,
             "custId": 0,
             "saleDate": "",
@@ -74,7 +84,7 @@ const CheckOut = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setPlaceOrderObj((prevObj) => ({
+        setPlaceobj((prevObj) => ({
             ...prevObj,
             custId: customerId,
             saleDate: new Date(),
@@ -85,25 +95,26 @@ const CheckOut = () => {
         }));
     }
 
-    const placeOrder = async () => {
-        // try {
-        //     debugger
-        //     postData('PlaceOrder', placeOrderObj).then(result => {
-        //         if (result != undefined) {
-        //             debugger
-        //             toast.success('Order Placed...!');
-        //             resetObj();
-        //             navigate("/Product");
-        //         }
-        //         else {
-        //             toast.alert('Error in placing order');
-        //             resetObj();
-        //         }
-        //     });
+    const placeorder = async () => {
+        debugger;
+        placeObj.totalInvoiceAmount = totalPrice;
+        placeObj.custId = loggedUserData.custId;
+        const response = await axios.post("https://freeapi.gerasim.in/api/BigBasket/PlaceOrder", placeObj)
+        if (response.data.result) {
+            for(let i=0;i<cartProductListByCustomer.length;i++)
+                {
+                    const response = await axios.get("https://freeapi.gerasim.in/api/BigBasket/DeleteProductFromCartById?id=" + cartProductListByCustomer[i].cartId);
+                   
+                }
+            getCartProductListbyCustId(loggedUserData.custId);
+           toast.success("Order Succefull")
+           navigate("/");
+        }
 
-        // } catch (error) {
-        //     alert(error);
-        // }
+        else {
+            toast.error("Failed")
+        }
+
     }
 
     return (
@@ -261,24 +272,24 @@ const CheckOut = () => {
                             <div className="card-header bg-danger bg-opacity-25">
                                 <h4>Billing Address</h4>
                             </div>
-                            <div className="card-body mb-5">
+                            <div class="card-body mb-5">
 
-                                <div className="row">
+                                <div class="row">
 
-                                    <div className="col-lg-6 col-md-6">
-                                        <input type="text" placeholder="City " className="form-control m-2" name="deliveryCity" onChange={handleChange} />
+                                    <div class="col-lg-6 col-md-6">
+                                        <input type="text" placeholder="City " class="form-control m-2" onChange={(e) => { getplaceObj(e, 'deliveryCity') }} />
                                     </div>
-                                    <div className="col-lg-6 col-md-6">
-                                        <input type="text" placeholder="Pincode " className="form-control m-2" name="deliveryPinCode" onChange={handleChange} />
+                                    <div class="col-lg-6 col-md-6">
+                                        <input type="text" placeholder="Pincode " class="form-control m-2" onChange={(e) => { getplaceObj(e, 'deliveryPinCode') }} />
                                     </div>
-                                    <div className="col-lg-6 col-md-6">
-                                        <textarea placeholder="Address Line 1 " className="form-control m-2" rows="3" name="deliveryAddress1" onChange={handleChange}></textarea>
+                                    <div class="col-lg-6 col-md-6">
+                                        <textarea placeholder="Address Line 1 " class="form-control m-2" rows="3" onChange={(e) => { getplaceObj(e, 'deliveryAddress1') }}></textarea>
                                     </div>
-                                    <div className="col-lg-6 col-md-6">
-                                        <textarea placeholder="Address Line  2" className="form-control m-2" rows="3" name="deliveryAddress2" onChange={handleChange}></textarea>
+                                    <div class="col-lg-6 col-md-6">
+                                        <textarea placeholder="Address Line  2" class="form-control m-2" rows="3" onChange={(e) => { getplaceObj(e, 'deliveryAddress2') }}></textarea>
                                     </div>
-                                    <div className="col-lg-6 col-md-6">
-                                        <textarea placeholder="Landmark" className="form-control m-2" rows="3" name="deliveryLandMark" onChange={handleChange}></textarea>
+                                    <div class="col-lg-6 col-md-6">
+                                        <textarea placeholder="Landmark" class="form-control m-2" rows="3" onChange={(e) => { getplaceObj(e, 'deliveryLandMark') }}></textarea>
                                     </div>
 
 
@@ -291,7 +302,7 @@ const CheckOut = () => {
 
                     <div className="col-lg-4 col-md-12">
                         <div className="card shadow ">
-                            <div className="card-header  bg-danger bg-opacity-25">
+                        <div class="card-header bg-primary text-white">
                                 <h4>Your Order</h4>
                             </div>
                             <div className="card-body">
@@ -299,9 +310,10 @@ const CheckOut = () => {
                                     cartProductListByCustomer.map((cartItems, index) => {
                                         return (
                                             <>
-                                                <div className="border-top d-flex mt-2">
-                                                    <img className="image-fluid" src={cartItems.productImageUrl}
-                                                        alt="" />
+                                                <div className="border-top d-flex mt-2" style={{ width: '50px', height: '50px' }} >
+                                                <img className="image-fluid" src={cartItems.productImageUrl} alt="" style={{ maxWidth: '50%', maxHeight: '50%' }} />
+
+
                                                     <div className="ps-3">
                                                         <p className="p-0 m-0 fw-semibold">{cartItems.productShortName}</p>
                                                         <p className="p-0 m-0">${cartItems.productPrice.toFixed(2)}</p>
@@ -314,6 +326,7 @@ const CheckOut = () => {
                                         )
                                     })
                                 }
+                               
                                 <div class="border-top ">
 
 
@@ -326,7 +339,7 @@ const CheckOut = () => {
                                     <div class="row border-top ">
                                         <div class="col-12 text-center mt-2">
                                             <div class="w-100 bg-black">
-                                                <button class="btn text-white rounded-0 " onClick={placeOrder}>Place Order</button>
+                                                <button class="btn text-white rounded-0 " onClick={placeorder}>Place Order</button>
                                             </div>
                                         </div>
                                     </div>

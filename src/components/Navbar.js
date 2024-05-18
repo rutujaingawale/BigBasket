@@ -2,10 +2,11 @@ import React, { useContext, useEffect, useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCartShopping, faUser, faShoppingCart, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCartShopping, faUser, faShoppingCart, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import Login from './Login';
 import Register from './Register';
 import { MyContext } from '../MycontextProviders';
+import { Button } from 'react-bootstrap';
 
 const Navbar = () => {
     const [categoryList, setCategoryList] = useState([]);
@@ -13,6 +14,7 @@ const Navbar = () => {
     const [showRegisterModal, setShowRegisterModal] = useState(false);
     const [showCartDropdown, setShowCartDropdown] = useState(false);
     const [cartProductListByCustomer, setCartProductListByCustomer] = useState([]);
+    
     const [error, setError] = useState('');
     const { loggedUserData } = useContext(MyContext);
     const navigate = useNavigate();
@@ -34,6 +36,7 @@ const Navbar = () => {
     };
 
     const naviagteToCheckOut = () => {
+
         navigate("/checkOut");
     }
 
@@ -62,7 +65,7 @@ const Navbar = () => {
           const response = await axios.get("https://freeapi.gerasim.in/api/BigBasket/DeleteProductFromCartById?id=" + product.cartId);
           if (response.data.result) {
             alert("Cart deleted");
-            getCartProductListbyCustId(); // Fetch cart products again after deletion
+            getCartProductListbyCustId(loggedUserData.custId); // Fetch cart products again after deletion
           } else {
             // Handle error if needed
           }
@@ -126,11 +129,11 @@ const Navbar = () => {
                                     <FontAwesomeIcon icon={faShoppingCart} style={{ color: 'black' }} />{cartProductListByCustomer.length}
                                     <i className="fa fa-cart-shopping fs-5 me-1" style={{ color: '#202122' }}></i>
                                 </a>
-                                <ul className={`dropdown-menu menuOnLeft rounded-0 mt-2 ${showCartDropdown ? 'show' : ''}`} aria-labelledby="navbarDropdown">
+                                <ul className={`dropdown-menu menuOnLeft rounded-0 mt-2 ${showCartDropdown ? 'show' : ''}`} aria-labelledby="navbarDropdown" >
                                     {cartProductListByCustomer.map((cartItem, index) => (
-                                        <li key={index} className="p-2">
-                                            <div className="d-flex border-bottom justify-content-between align-items-center">
-                                                <img className="image-fluid" src={cartItem.productImageUrl} alt="" style={{ width: '50px', height: '50px' }}/>
+                                        <li key={index} className="p-2"> 
+                                            <div className="align-items-center" >
+                                                <img className="image-fluid" src={cartItem.productImageUrl} alt="" />
                                                 <div>
                                                     <a href="#" className="text-decoration-none text-black fw-semibold">
                                                         <p className="m-0 p-0">{cartItem.productShortName}</p>

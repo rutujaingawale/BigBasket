@@ -32,10 +32,9 @@ const Login = ({ showLoginModal, closeModalLogin }) => {
         return true;
     };
 
-    const handleLogin = async() => {
+    const handleLogin = async () => {
         if (validate()) {
             try {
-                debugger
                 const result = await axios.get('https://freeapi.miniprojectideas.com/api/BigBasket/GetAllCustomer');
                 const users = result.data.data; // Update variable name
                 const allUsers = users.flat();
@@ -44,15 +43,17 @@ const Login = ({ showLoginModal, closeModalLogin }) => {
                     updateLoggedUserData(isUserPresent);
                     alert('Login successfully');
                     localStorage.setItem('LoginDetails', JSON.stringify(isUserPresent));
+                    setShowModal(false); // Close the login modal
                     navigate('/product');
                 } else {
                     alert('Invalid username or password');
                 }
-            } catch(error) {
+            } catch (error) {
                 alert('Error');
             }
         }
     };
+    
 
     return (
         <Modal show={showLoginModal} onHide={closeModalLogin}>
